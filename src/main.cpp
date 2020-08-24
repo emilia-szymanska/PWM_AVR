@@ -12,10 +12,10 @@
 
 void uart_config()
 {
-  UBRR0H = 0x00;
-  UBRR0L = 0x10;
-  UCSR0C |= (1<<UCSZ01) | (1<< UCSZ00);
-  UCSR0B |= (1<< RXEN0) | (1<< TXEN0);
+  UBRR0H = 0x00;                          //USART baud rate register high
+  UBRR0L = 0x10;                          //USART baud rate register low
+  UCSR0C |= (1<<UCSZ01) | (1<< UCSZ00);   //8-bit character size
+  UCSR0B |= (1<< RXEN0) | (1<< TXEN0);    //Receiver & Transmitter enable
 }
 
 void USART_Transmit(unsigned char data)
@@ -32,31 +32,31 @@ unsigned char USART_Receive()
 
 void init_timer1(int frequency)
 {
-  TIMSK1 |= (1<<OCIE1B) | (1<<OCIE1A);
-  TCCR1B |= (1<<WGM12);
+  TIMSK1 |= (1<<OCIE1B) | (1<<OCIE1A);  //Timer/Counter1, Output Compare A & B Match Interrupt Enable
+  TCCR1B |= (1<<WGM12);                 //Clear Timer on Compare Match (CTC) Mode
   sei();
 
-  if(frequency < 4)         //to small prescaler
+  if(frequency < 4)                     //to small prescaler
   {
-    TCCR1B |= (1<<CS12);
+    TCCR1B |= (1<<CS12);                //prescaler = 256
     OCR1A = 16000000/(256 * frequency) - 1;
   }
   else 
   {
-    if(frequency > 100000)   //too big prescaler
+    if(frequency > 100000)              //too big prescaler
     {
-      TCCR1B |= (1<<CS11);
+      TCCR1B |= (1<<CS11);              //prescaler = 8
       OCR1A = 16000000/(8 * frequency) - 1;
     }
     else
     {
-      TCCR1B |= (1<<CS11) | (1<<CS10);
+      TCCR1B |= (1<<CS11) | (1<<CS10);  //prescaler = 64
       OCR1A = 16000000/(64 * frequency) - 1;
     }
   }
 }
 
-void set_duty_cycle(double duty_cycle)      //in % 
+void set_duty_cycle(double duty_cycle)        //in % 
 {
   OCR1B = ((OCR1A + 1) * duty_cycle)/100 - 1; //setting the duty cycle based on % value
 }
@@ -79,7 +79,7 @@ int main()
   {
     read = USART_Receive();
     
-    if(read != '\n') angle = angle * 10 + (read - '0');
+    if(read != '\n') angle = angle * 10 + (read - '0');   //converting chars (e.g. '2' '3' '4') into numbers (e.g. 234)
     else 
     {
       set_servo_position(angle);
@@ -90,12 +90,12 @@ int main()
   return 0;
 }
 
-ISR (TIMER1_COMPA_vect)
+ISR (TIMER1_COMPA_vect)       //interruption, comparing to A
 {
   sbi(PORTD, PD5);
 }
 
-ISR (TIMER1_COMPB_vect)
+ISR (TIMER1_COMPB_vect)       //interruption, comparing to B
 {
   cbi(PORTD, PD5);
 }
